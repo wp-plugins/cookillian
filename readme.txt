@@ -36,6 +36,7 @@ With the included statistics, you can see how many visitors have decided to opt 
 * Support for [CloudFlare](http://www.cloudflare) geolocation HTTP headers
 * Exposed PHP/WordPress Filters and JavaScript variables regarding cookie permissions, opt-in and opt-out for complex sites
 * Statistics to track the impact of the EC Directive
+* Debug mode for web development and testing
 
 == Installation ==
 
@@ -59,6 +60,12 @@ with PHP versions older than 5.3.
 2. Statistics to track compliance impact
 
 == Changelog ==
+
+= 1.0.8 (15 May 2012) =
+__Added:__ Debug mode, to allow for easier fault finding and assist with designing a website.
+__Added:__ URI to remove opt-in or opt-out status (`?cookillian_resp=2`)
+Changed: Wrapping of optional JavaScript in `<script>` tags is now optional (enabled by default)
+Fixed: Cookies were not automatically detected for visitors outside of the selected countries
 
 = 1.0.4 (11 May 2012) =
 Changed: Corrected mistake in Readme title
