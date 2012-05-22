@@ -5,8 +5,12 @@
     file that was distributed with this source code.
 #}
 
+<div class="ip-info">
+    {{ __('Your current location, based on IP') }} <strong>{{ current_ip }}</strong>, {{ __('is') }} <strong>{{ current_location }}</strong>.
+</div>
+
 <div style="position: relative; width: 100%;"> {# REL DIV #}
-    <form method="post" action="" id="settings_form">
+    <form method="post" action="" id="settings_form" enctype="multipart/form-data">
         {{ nonce | raw }}
 
         <table class="form-table">
@@ -29,14 +33,16 @@
                     </th>
                     <td>
                         {% for geo_service_name, geo_service_value in geo_services %}
-                        <label>
-                            <input type="radio" name="geo_service" value="{{ geo_service_name }}"{% if geo_service_value.checked %}checked="checked"{% endif %} />
-                            {{ geo_service_value.title }}
-                        </label>
-                        <span class="description">{{ geo_service_value.desc | raw }}</span>
-                        {% if not loop.last %}
-                        <br />
-                        {% endif %}
+                        <p>
+                            <label>
+                                <input type="radio" name="geo_service" value="{{ geo_service_name }}"{% if geo_service_value.checked %}checked="checked"{% endif %} />
+                                {{ geo_service_value.title }}
+                            </label>
+                            <span class="description">{{ geo_service_value.desc | raw }}</span>
+                            {% if has_geo_data == geo_service_name %}
+                                <strong>(Detected)</strong>
+                            {% endif %}
+                        </p>
                         {% endfor %}
                     </td>
                 </tr>
@@ -59,8 +65,70 @@
                         </ul>
                     </td>
                 </tr>
+
+                <tr>
+                    <th scope="row">
+                        {{ __('Undetermined Countries') }}
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="show_on_unknown_location" {% if show_on_unknown_location %}checked="checked"{% endif %} />
+                            {{ __('Show the alert if the visitor\'s country could not be determined') }}
+                            <span class="description">({{ __('Recommended') }})</span>
+                        </label>
+                    </td>
+                </tr>
             </tbody>
         </table>
+
+        <div class="maxmind_settings">
+            <h3>MaxMind Settings</h3>
+            <table class="form-table">
+                <tbody>
+                    <tr>
+                        <th scope="row">
+                            {{ __('IPv4 Country Database') }}
+                        </th>
+                        <td>
+                            <label>
+                                {{ __('File Location:') }}
+                                <input type="text" name="maxmind_db" id="maxmind_db" value="{{ maxmind_db }}" />
+                            </label>
+                            <br />
+                            <label>
+                                {% if maxmind_db %}
+                                    {{ __('or <em>replace</em> the existing database:') | raw }}
+                                {% else %}
+                                    {{ __('or upload a new database:') }}
+                                {% endif %}
+                                <input type="file" name="maxmind_db_file" id="madmind_db_file" />
+                            </label>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">
+                            {{ __('IPv6 Country Database') }}
+                        </th>
+                        <td>
+                            <label>
+                                {{ __('File Location:') }}
+                                <input type="text" name="maxmind_db_v6" id="maxmind_db_v6" value="{{ maxmind_db_v6 }}" />
+                            </label>
+                            <br />
+                            <label>
+                                {% if maxmind_db_v6 %}
+                                    {{ __('or <em>replace</em> the existing database:') | raw }}
+                                {% else %}
+                                    {{ __('or upload a new database:') }}
+                                {% endif %}
+                                <input type="file" name="maxmind_db_v6_file" id="madmind_db_v6_file" />
+                            </label>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
         <h3>Alert Settings</h3>
         <table class="form-table">
@@ -265,6 +333,7 @@
                         <label>
                             <input type="checkbox" name="debug_mode" {% if debug_mode %}checked="checked"{% endif %} />
                             {{ __('Enable debug mode') }}
+                            <span class="description">({{ __('An alert will always be shown to logged-in users, and debug details are added to the HTML source at all times') }})</span>
                         </label>
                     </td>
                 </tr>
