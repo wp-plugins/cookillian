@@ -565,7 +565,7 @@ class Main extends \Pf4wp\WordpressPlugin
                 break;
         }
 
-        // Return the updated stats back to where they belong
+        // Return thde updated stats back to where they belong
         $stats[$year][$month][$remote_country] = $country_stats;
 
         // And save
@@ -578,6 +578,11 @@ class Main extends \Pf4wp\WordpressPlugin
     public function processResponse($answer)
     {
         $opt_in_or_out = '';
+        $redir_url     = add_query_arg(array(
+            '__r' => substr(md5(time() . rand()), 0, 8),
+            $this->short_name . static::RESP_ID => false,
+
+        ));
 
         switch ($answer) {
             case 2 :
@@ -586,7 +591,7 @@ class Main extends \Pf4wp\WordpressPlugin
                 setcookie($this->short_name . static::OPTOUT_ID, '', time() - 3600, '/');
 
                 // Send the visitor back now
-                if (isset($_SERVER['HTTP_REFERER'])) { wp_redirect($_SERVER['HTTP_REFERER']); die(); }
+                wp_redirect($redir_url); die();
 
                 break;
 
@@ -611,7 +616,7 @@ class Main extends \Pf4wp\WordpressPlugin
         Cookies::set($opt_in_or_out, 1, strtotime(static::COOKIE_LIFE), true, false, '/');
 
         // And send the visitor back to where they were, if possible
-        if (isset($_SERVER['HTTP_REFERER'])) { wp_redirect($_SERVER['HTTP_REFERER']); die(); }
+        wp_redirect($redir_url); die();
     }
 
     /**
@@ -663,7 +668,7 @@ class Main extends \Pf4wp\WordpressPlugin
                 WP_Filesystem();
 
             // Create a working directory to extract file(s) to
-            $temp_dir = \Pf4wp\Storage\StoragePath::validate(trailingslashit(realpath(sys_get_temp_dir()))  . 'cookillian_' . substr(md5(time() . rand()), 8), false);
+            $temp_dir = \Pf4wp\Storage\StoragePath::validate(trailingslashit(realpath(sys_get_temp_dir()))  . 'cookillian_' . substr(md5(time() . rand()), 0, 8), false);
 
             // If we have a valid working directory and could extract the ZIP file, look at the contents
             if ($temp_dir && unzip_file($upload['file'], $temp_dir)) {
@@ -758,7 +763,7 @@ class Main extends \Pf4wp\WordpressPlugin
         // Pre-fill the 'Known Cookies' with those created by WordPress
         $known_cookies = $this->options->known_cookies;
 
-        if (empty($known_cookie)) {
+        if (empty($known_cookies)) {
             $this->options->known_cookies = array(
                 'wordpress_*' => array(
                     'desc'  => 'This cookie stores WordPress authentication details.',
@@ -888,7 +893,7 @@ class Main extends \Pf4wp\WordpressPlugin
     {
         // JavaScript exposing whether cookies have been blocked and whether the visitor has opted out or in
         echo $this->jsBlock(sprintf("var cookillian = {\"blocked_cookies\":%s,\"opted_out\":%s,\"opted_in\":%s,\"_manual\":%s};",
-            ($this->cookies_blocked && !$this->options->debug_mode) ? 'true' : 'false',
+            ($this->cookies_blocked) ? 'true' : 'false',
             ($this->optedOut()) ? 'true' : 'false',
             ($this->optedIn()) ? 'true' : 'false',
             ($this->options->alert_show == 'manual') ? 'true' : 'false'
@@ -974,7 +979,7 @@ class Main extends \Pf4wp\WordpressPlugin
     {
         $result = $original;
 
-        // If cookies are found to be blocked and we haven't specifically opted out, or in debug mode, we show an alert
+        // If cookies are found to be blocked and we haven't specifically opted out, we show an alert
         if ($this->cookies_blocked && !$this->optedOut()) {
             $this->addStat('displayed');
 
@@ -1307,10 +1312,11 @@ class Main extends \Pf4wp\WordpressPlugin
 
         $vars = array(
             'nonce'              => wp_nonce_field('onCookiesMenu', '_nonce', true, false),
-            'submit_button'      => get_submit_button(),
+            'submit_button'      => get_submit_button(null, 'primary', 'submit', false),
             'known_cookies'      => $known_cookies,
             'known_cookie_count' => count($known_cookies),
             'is_rtl'             => is_rtl(),
+            'action_url'         => add_query_arg(array()),
         );
 
         $this->template->display('cookies.html.twig', $vars);
@@ -1335,8 +1341,8 @@ class Main extends \Pf4wp\WordpressPlugin
 
         $vars = array(
             'year'      => $year,
-            'years'     => $years,
-            'stats'     => $stats[$year],
+            'years'     => (!empty($years)) ? $years : array($year),
+            'stats'     => (isset($stats[$year])) ? $stats[$year] : array(),
             'countries' => $this->getCountries(),
         );
 
