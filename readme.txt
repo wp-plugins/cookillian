@@ -1,10 +1,10 @@
 === Cookillian ===
 Contributors: Myatu
 Donate link: http://pledgie.com/campaigns/16906
-Tags: cookie, eu, ec, europe, uk, law, directive, filter, block
+Tags: cookie, ec, europe, uk, cookie law, directive, eu cookie directive, filter, block,
 Requires at least: 3.3
-Tested up to: 3.4-beta3
-Stable tag: 1.0.8
+Tested up to: 3.4
+Stable tag: 1.1
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -24,19 +24,27 @@ With the included statistics, you can see how many visitors have decided to opt 
 
 = Features =
 
-* Selective filtering/alerts based on the visitor's originating country
-* Automatic alerts, or manually displayed using a WordPress filter or shortcode
-* Fully customizable alert/information about cookies
+* Selective cookie filtering and alerts based on the visitor's originating country
+* Automatic alerts, or manually displayed using a WordPress filter, API or shortcode
+* Fully customizable alert text and styling
 * Optional JavaScript loading if cookies are permitted
 * Support for Cookie-based PHP Sessions
 * Define cookies that are required for the operation of the website
 * Automatic collection of cookies used by the website
 * Automatic rendering of details about cookies using shortcodes
 * Support for [geoPlugin](http://www.geoplugin.com) geolocation service
-* Support for [CloudFlare](http://www.cloudflare) geolocation HTTP headers
-* Exposed PHP/WordPress Filters and JavaScript variables regarding cookie permissions, opt-in and opt-out for complex sites
+* Support for [CloudFlare](http://www.cloudflare.com) geolocation HTTP headers
+* Support for [MaxMind](http://www.maxmind.com) geolocation database or Apache module/NginX GeoIP module
+* Backup geoloaction service, should the default geolocation service fail
+* JavaScript and PHP API
 * Statistics to track the impact of the EC Directive
 * Debug mode for web development and testing
+* Supports caching plugins, such as WP Super Cache
+* Support for the DNT/Do Not Track browser headers (http://donottrack.us)
+* Support for "Implied Consent"
+* Dashboard widget for quick overview of the statistics, and if new cookies have been detected
+
+Visit the [official website](http://myatus.com/projects/cookillian/) for more details.
 
 == Installation ==
 
@@ -61,32 +69,60 @@ with PHP versions older than 5.3.
 
 == Changelog ==
 
-= 1.0.10 =
-Changed: Updated Pf4wp vendor library, adding debug information in footer
-Fixed: Issues with Twig vendor library, resulting in _Twig_Error_Runtime_ errors.
+= 1.1 (May 31 2012) =
+* __Added:__ Support for "Implied Consent"
+* __Added:__ Support for caching plugins, such as WP Super Cache and W3 Total Cache
+* __Added:__ Option to provide custom styling for the alert from the menu
+* __Added:__ Option to delete cookies before or after the visitor has opted out
+* __Added:__ Option to adjust geolocation cache time, as well as clear it
+* __Added:__ Backup geoloaction service, provided by [freegeoip.net](http://www.freegeoip.net), should the default geoloaction service fail.
+* __Added:__ Export option (CSV) for statistics
+* __Added:__ Dashboard widget, giving quick overview of newly added cookies and top statistics
+* Fixed: Fixed a bug that overwrote existing cookies from the __Cookies__ listing
+* Fixed: Empty country name on "Unknown" country in statistics
+* Fixed: If a generic "EU" or "AP" is retured by the geolocation service, determine if selected countries falls within that region
+* Changed: On JavaScript-enabled browsers, the _Delete_ box has been replaced by a _Remove_ button in the __Cookies__ listing
+* Changed: Made the _noscript_ tag optional, to accomodate caching plugins
+* Changed: Shortcode for listing cookies now accepts multiple groups, as well as exclusion
+
+= 1.0.17.1 (22 May 2012) =
+* Fixed: Fixed bug that caused the plugin from operating on certain systems (apache_note())
+
+= 1.0.17 (22 May 2012) =
+* __Added:__ Support for [MaxMind](http://www.maxmind.com) geolocation database or Apache module/NginX GeoIP module
+* __Added:__ Option to display an alert if the visitor's country could not be determined
+* __Added:__ Option for DNT/Do Not Track browser headers (http://donottrack.us)
+* Fixed: Type-check prevented undetermined countries to remain in cache for 24 hours
+* Fixed: IP geolocation data for geoPlugin was incorrectly unserialized
+* Changed: Alert is now only displayed to logged in users in "Debug Mode"
+* Changed: All EC member states are selected by default on new installations
+
+= 1.0.10 (16 May 2012) =
+* Changed: Updated Pf4wp vendor library, adding debug information in footer
+* Fixed: Issues with Twig vendor library, resulting in _Twig_Error_Runtime_ errors.
 
 = 1.0.8 (15 May 2012) =
-__Added:__ Debug mode, to allow for easier fault finding and assist with designing a website.
-__Added:__ URI to remove opt-in or opt-out status (`?cookillian_resp=2`)
-Changed: Wrapping of optional JavaScript in `<script>` tags is now optional (enabled by default)
-Fixed: Cookies were not automatically detected for visitors outside of the selected countries
+* __Added:__ Debug mode, to allow for easier fault finding and assist with designing a website.
+* __Added:__ URI to remove opt-in or opt-out status (`?cookillian_resp=2`)
+* Changed: Wrapping of optional JavaScript in `<script>` tags is now optional (enabled by default)
+* Fixed: Cookies were not automatically detected for visitors outside of the selected countries
 
 = 1.0.4 (11 May 2012) =
-Changed: Corrected mistake in Readme title
+* Changed: Corrected mistake in Readme title
 
 = 1.0.3 (9 May 2012) =
-__Added:__ PHP/WordPress filters for opt-in, opt-out and blocked/unblocked cookies status
-Changed: Updated the vendor libraries
+* __Added:__ PHP/WordPress filters for opt-in, opt-out and blocked/unblocked cookies status
+* Changed: Updated the vendor libraries
 
 = 1.0.1 (5 May 2012) =
 
-First Release
+* First Release
 
 == Frequently Asked Questions ==
 
 = Help, it's broken! What do I do now? =
 
-If something does not appear to be working as it should, [search the forum](http://wordpress.org/tags/cookillian) or [write a new topic](http://wordpress.org/tags/cookillian#postform) that describes the problem(s) you are experiencing.
+If something does not appear to be working as it should, [search the support forum](http://wordpress.org/support/plugin/cookillian) or write a new topic that describes the problem(s) you are experiencing. I will do my best to provide a solution as soon as possible.
 
 = I have a PHP version older than 5.3, can I make it work? =
 
@@ -106,3 +142,53 @@ If you are using a web hosting provider, then you need to contact the provider r
 * GoDaddy 4GH Hosting: Visit GoDaddy's __Hosting Control Center__ -> __Content__ -> __Programming Languages__
 * HostGator: Add `Action application/x-hg-php53 /cgi-sys/php53` and `AddHandler application/x-hg-php53 .php` to the `.htaccess` file
 * Bluehost: Add `AddHandler application/x-httpd-php53 .php` to the `.htaccess` file (Note: may require a support request/ticket to enable PHP 5.3)
+
+= Will this plugin make my website entirely compliant? =
+
+The plugin is to assist with compliance, but it may not be a full-stop solution.
+
+For example, this plugin will stop WordPress and any other WordPress plugins you've installed from setting a cookie. But, if there's Javascript used on your website, they may still set cookies that are beyond the control of Cookillian. Google Analytics is probably the most common one, but other things like _Share on Facebook_ or _Share on Twitter_ buttons could set their own cookies.
+
+That's why there's the option within the plugin to include JavaScript in the header/footer if the visitor has agreed to receiving cookies - you'd need to remove that JavaScript from your website, and add it to the plugin option instead.
+
+Cookillian will also list which cookies it has detected (including ones set by JavaScript). There are also extensions for browsers that will help you see which cookies have managed to get past Cookillian. Google Chrome users can use the _Developer Tools_ from the Menu bar as well.
+
+If you have any cookie that are required for your website to operate, ie., a cookie that stores products placed in a shopping cart, you can set these in the plugin's __Cookies__ page as well.
+
+= The alert has disappeared after I clicked "No", how do I get it back? =
+
+You can reset your preference by adding `?cookillian_resp=2` to any URL of your website, such as `www.example.co.uk/?cookillian_resp=2`. Naturally, you can add this as a link on, for example, the Privacy Policy page to make it easier for visitors.
+
+= How do I know if it is working? =
+
+On the __Settings__ page, under the heading __Advanced Options__ near the bottom, you have the option to enable _Debug Mode_. For logged-in users, this will cause the alert to be displayed at all times, which allows you to see where it will be located.
+
+Enabling the _Debug Mode_ also provides you with extra information when using the JavaScript console. The console can be viewed with [Firebug](http://getfirebug.com/), or the browser's _Developer Tools_.
+
+= The alert is not displaying at all, help! =
+
+The alert is not shown if:
+
+* The visitor is logged in as a WordPress user (with any role), or
+* The visitor is not in one of the defined countries, or
+* The visitor already explicitly opted in/out, or
+* The browser support the "Do Not Track" [(see donotrack.us)](http://donottrack.us) option, and enabled it.
+
+If the alert is still not being displayed, enable the _Debug Mode_ as described above.
+
+= How do I change where the alert is displayed? =
+
+First you need to set __Show Alert__ to _Manually_ on the __Settings__ page. In its simplest form, you can use a WordPress shortcode `[cookillian alert]` in a post or page, which will be replaced by the alert if neccesary.
+
+For slightly more complex use, you insert `<?php cookillian_insert_alert_block(); ?>` in the desired location of your theme.
+
+= How do I change the appearance of the alert? =
+
+You can use your own CSS styling through by choosing _Custom_ for the _Alert Styling_ on the __Settings__ page. The alert is wrapped in a `.cookillian-alert` class (also when added manually), providing the background and border colors. The alert heading is in an `.alert-heading` class and the Yes and No buttons in `.btn-ok` and `.btn-no` respectively. If your CSS styling does not appear, you may need to add `!important` to your styling.
+
+= When I click on "Privacy Policy", nothing happened =
+
+On the __Settings__ page, you will need to modify the __Alert Text__ by replacing the hash sign (#) within the `<a href="#">` HTML tags to the actual URL of your Privacy Policy (and the "More Information" link).
+
+
+
