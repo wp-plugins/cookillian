@@ -6,37 +6,28 @@
 #}
 
 <div style="position: relative; width: 100%;"> {# REL DIV #}
-    <form method="post" action="" id="settings_form">
+    <form method="post" action="" id="settings_form" enctype="multipart/form-data">
         {{ nonce | raw }}
 
+        <h3>{{ __('Geolocation') }}</h3>
         <table class="form-table">
             <tbody>
-                <tr>
-                    <th scope="row">
-                        {{ __('Auto-add Cookies') }}
-                    </th>
-                    <td>
-                        <label>
-                            <input type="checkbox" name="auto_add_cookies" {% if auto_add_cookies %}checked="checked"{% endif %} />
-                            {{ __('Automatically add new/unknown cookies to the Cookies list') }}
-                        </label>
-                    </td>
-                </tr>
-
                 <tr>
                     <th scope="row">
                         {{ __('Geolocation Service') }}
                     </th>
                     <td>
                         {% for geo_service_name, geo_service_value in geo_services %}
-                        <label>
-                            <input type="radio" name="geo_service" value="{{ geo_service_name }}"{% if geo_service_value.checked %}checked="checked"{% endif %} />
-                            {{ geo_service_value.title }}
-                        </label>
-                        <span class="description">{{ geo_service_value.desc | raw }}</span>
-                        {% if not loop.last %}
-                        <br />
-                        {% endif %}
+                        <p>
+                            <label>
+                                <input type="radio" name="geo_service" value="{{ geo_service_name }}"{% if geo_service_value.checked %}checked="checked"{% endif %} />
+                                {{ geo_service_value.title }}
+                            </label>
+                            <span class="description">{{ geo_service_value.desc | raw }}</span>
+                            {% if has_geo_data == geo_service_name %}
+                                <strong>(Detected)</strong>
+                            {% endif %}
+                        </p>
                         {% endfor %}
                     </td>
                 </tr>
@@ -59,26 +50,99 @@
                         </ul>
                     </td>
                 </tr>
+
+                <tr>
+                    <th scope="row">
+                        {{ __('Undetermined Countries') }}
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="show_on_unknown_location" {% if show_on_unknown_location %}checked="checked"{% endif %} />
+                            {{ __('Show the alert if the visitor\'s country could not be determined') }}
+                            <span class="description">({{ __('Recommended') }})</span>
+                        </label>
+                    </td>
+                </tr>
             </tbody>
         </table>
 
-        <h3>Alert Settings</h3>
+        <div class="maxmind_settings">
+            <h3>{{ __('MaxMind Settings') }}</h3>
+            <table class="form-table">
+                <tbody>
+                    <tr>
+                        <th scope="row">
+                            {{ __('IPv4 Country Database') }}
+                        </th>
+                        <td>
+                            <label>
+                                {{ __('File Location:') }}
+                                <input type="text" name="maxmind_db" id="maxmind_db" value="{{ maxmind_db }}" />
+                            </label>
+                            <br />
+                            <label>
+                                {% if maxmind_db %}
+                                    {{ __('or <em>replace</em> the existing database:') | raw }}
+                                {% else %}
+                                    {{ __('or upload a new database:') }}
+                                {% endif %}
+                                <input type="file" name="maxmind_db_file" id="madmind_db_file" />
+                            </label>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">
+                            {{ __('IPv6 Country Database') }}
+                        </th>
+                        <td>
+                            <label>
+                                {{ __('File Location:') }}
+                                <input type="text" name="maxmind_db_v6" id="maxmind_db_v6" value="{{ maxmind_db_v6 }}" />
+                            </label>
+                            <br />
+                            <label>
+                                {% if maxmind_db_v6 %}
+                                    {{ __('or <em>replace</em> the existing database:') | raw }}
+                                {% else %}
+                                    {{ __('or upload a new database:') }}
+                                {% endif %}
+                                <input type="file" name="maxmind_db_v6_file" id="madmind_db_v6_file" />
+                            </label>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>{{ __('Alert Settings') }}</h3>
         <table class="form-table">
             <tbody>
                 <tr>
                     <th scope="row">
-                        {{ __('Show Alert') }}
+                        {{ __('Display Alert') }}
                     </th>
                     <td>
                         <label>
                             <input type="radio" name="alert_show" value="auto" {% if alert_show == 'auto' %}checked="checked"{% endif %} />
                             {{ __('Automatic') }}
                         </label>
-                        <br />
                         <label>
                             <input type="radio" name="alert_show" value="manual" {% if alert_show == "manual" %}checked="checked"{% endif %} />
                             {{ __('Manually') }}
-                            <span class="description">{{ __('See <strong>Help</strong> how to display the alert.') | raw }}</span>
+                        </label>
+                        <span class="description">({{ __('See <strong>Help</strong> how to display the alert.') | raw }})</span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">
+                        {{ __('Implied Consent') }}
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="implied_consent" {% if implied_consent %}checked="checked"{% endif %} />
+                            {{ __('If the visitor ignores the displayed alert, imply the visitor has opted in') }}
                         </label>
                     </td>
                 </tr>
@@ -92,7 +156,6 @@
                             <input type="radio" name="alert_content_type" value="default" {% if alert_content_type == 'default' %}checked="checked"{% endif %} />
                             {{ __('Default') }}
                         </label>
-                        <br />
                         <label>
                             <input type="radio" name="alert_content_type" value="custom" {% if alert_content_type == "custom" %}checked="checked"{% endif %} />
                             {{ __('Custom') }}
@@ -101,10 +164,37 @@
                     </td>
                 </tr>
 
+                <tr>
+                    <th scope="row">
+                        {{ __('Alert Styling') }}
+                    </th>
+                    <td>
+                        <label>
+                            <input type="radio" name="alert_style" value="default" {% if alert_style == 'default' %}checked="checked"{% endif %} />
+                            {{ __('Default') }}
+                        </label>
+                        <label>
+                            <input type="radio" name="alert_style" value="custom" {% if alert_style == "custom" %}checked="checked"{% endif %} />
+                            {{ __('Custom') }}
+                        </label>
+                    </td>
+                </tr>
+
+                <tr class="alert_custom_style_extra">
+                    <th scope="row">
+                        {{ __('Custom Alert Style') }}
+                    </th>
+                    <td>
+                        <p>{{ __('Use <abbr title="Cascading Style Sheet">CSS</abbr> to style your alert:') | raw }}</p>
+                        <label>
+                            <textarea class="code" name="alert_custom_style" id="alert_custom_style">{{ alert_custom_style }}</textarea>
+                        </label>
+                    </td>
+                </tr>
             </tbody>
         </table>
 
-        <h3>Content</h3>
+        <h3>{{ __('Content') }}</h3>
         <table class="form-table alert_normal">
             <tbody>
                 <tr>
@@ -160,7 +250,7 @@
                         {{ __('Custom Alert Code') }}
                     </th>
                     <td>
-                        <p>{{ __('Use HTML to create your own custom alert:') }}</p>
+                        <p>{{ __('Use <abbr title="Hypertext Markup Language">HTML</abbr> to create your own custom alert:') | raw }}</p>
                         <label>
                             <textarea class="code" name="alert_custom_content" id="alert_custom_content">{{ alert_custom_content }}</textarea>
                         </label>
@@ -179,12 +269,13 @@
                         <label>
                             <input type="text" name="required_text" id="required_text" value="{{ required_text }}" />
                         </label>
+                        <span class="description">{{ __('This text is used to indicate required cookies when using the <code>[cookillian cookies]</code> shortcode') | raw }}</span>
                     </td>
                 </tr>
             </tbody>
         </table>
 
-        <h3>JavaScript</h3>
+        <h3>{{ __('JavaScript') }}</h3>
         <table class="form-table script_header_footer">
             <tbody>
                 <tr>
@@ -214,12 +305,65 @@
                         </label>
                     </td>
                 </tr>
+
+                <tr>
+                    <th scope="row">
+                        {{ __('JavaScript Tags') }}
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="js_wrap" {% if js_wrap %}checked="checked"{% endif %} />
+                            {{ __('Automatically wrap header and footer in <code>&lt;script&gt;</code> and <code>&lt;/script&gt;</code> tags') | raw }}
+                        </label>
+                    </td>
+                </tr>
             </tbody>
         </table>
 
-        <h3>Advanced Options</h3>
-        <table class="form-table">
+        <h3>{{ __('Advanced Options') }}</h3>
+        <table id="advanced_options" class="form-table">
             <tbody>
+                <tr>
+                    <th scope="row">
+                        {{ __('Auto-add Cookies') }}
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="auto_add_cookies" {% if auto_add_cookies %}checked="checked"{% endif %} />
+                            {{ __('Automatically add new/unknown cookies to the <em>Cookies</em> list') | raw }}
+                        </label>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">
+                        {{ __('Root Cookies') }}
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="delete_root_cookies" {% if delete_root_cookies %}checked="checked"{% endif %} />
+                            {{ __('Delete root cookies in addition to local cookies') }}
+                        </label>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">
+                        {{ __('Delete cookies') }}
+                    </th>
+                    <td>
+                        <label>
+                            <input type="radio" name="delete_cookies" value="before_optout" {% if delete_cookies == 'before_optout' %}checked="checked"{% endif %} />
+                            {{ __('Before, or ') }}
+                        </label>
+                        <label>
+                            <input type="radio" name="delete_cookies" value="after_optout" {% if delete_cookies == "after_optout" %}checked="checked"{% endif %} />
+                            {{ __('After') }}
+                        </label>
+                        {{ __(' opt out') }}
+                    </td>
+                </tr>
+
                 <tr>
                     <th scope="row">
                         {{ __('PHP Sessions') }}
@@ -233,27 +377,57 @@
                     </td>
                 </tr>
 
+                {% if not has_caching %}
                 <tr>
                     <th scope="row">
-                        {{ __('Root Cookies') }}
+                        {{ __('Non-JavaScript Support') }}
                     </th>
                     <td>
                         <label>
-                            <input type="checkbox" name="delete_root_cookies" {% if delete_root_cookies %}checked="checked"{% endif %} />
-                            {{ __('Filter root cookies in addition to local cookies') }}
+                            <input type="checkbox" name="noscript_tag" id="noscript_tag" {% if noscript_tag %}checked="checked"{% endif %} />
+                            {{ __('Provide a dynamic <code>&lt;noscript&gt;</code> section containing the alert for non-JavaScript browsers') | raw }}
+                        </label>
+                        <span class="description">({{ __('Recommended, except when using caching plugins') }})</span>
+                    </td>
+                </tr>
+                {% endif %}
+
+                <tr>
+                    <th scope="row">
+                        {{ __('Geolocation Cache') }}
+                    </th>
+                    <td>
+                        <label>
+                            {{ __('Keep geolocation lookups in cache for up to') }}
+                            <input type="number" step="60" id="geo_cache_time" name="geo_cache_time" value="{{ geo_cache_time }}"/>
+                            {{ __('minutes.') }}
+                        </label>
+                        <input type="submit" class="button button-action" name="clear-geo-cache" id="clear_geo_cache" value="{{ __('Clear cache now') }}" />
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">
+                        {{ __('Geolocation Backup Service') }}
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="geo_backup_service" {% if geo_backup_service %}checked="checked"{% endif %} />
+                            {{ __('Use a backup geoloaction service, provided by <a href="http://freegeoip.net/" target="_blank">freegeoip.net</a>, if the default geolocation service has failed.') | raw }}
                         </label>
                     </td>
                 </tr>
 
                 <tr>
                     <th scope="row">
-                        {{ __('JavaScript Tags') }}
+                        {{ __('Asynchronous AJAX') }}
                     </th>
                     <td>
                         <label>
-                            <input type="checkbox" name="js_wrap" {% if js_wrap %}checked="checked"{% endif %} />
-                            {{ __('Automatically wrap optional JavaScript in <code>&lt;script&gt;</code> and <code>&lt;/script&gt;</code> tags') | raw }}
+                            <input type="checkbox" name="async_ajax" {% if async_ajax %}checked="checked"{% endif %} />
+                            {{ __('Initialize using asynchronous AJAX') }}
                         </label>
+                        <span class="description">({{ __('Increases speed, but requires JavaScript variables to be accessed via events') }})</span>
                     </td>
                 </tr>
 
@@ -266,6 +440,7 @@
                             <input type="checkbox" name="debug_mode" {% if debug_mode %}checked="checked"{% endif %} />
                             {{ __('Enable debug mode') }}
                         </label>
+                        <span class="description">({{ __('An alert will always be shown to any logged-in user, and debug details can be seen using the JavaScript console') }})</span>
                     </td>
                 </tr>
             </tbody>
@@ -281,7 +456,7 @@
             <a href="{{ plugin_home }}" target="_blank">{{ plugin_name }} {{ plugin_version }}</a> |
             <a href="#" id="footer_debug_link">{{ __('Debug') }}</a> |
             <a href="http://wordpress.org/extend/plugins/cookillian/" target="_blank">{{ __('Rate It') }}</a> |
-            <a href="http://wordpress.org/tags/cookillian" target="_blank">{{ __('Forum') }}</a> |
+            <a href="http://wordpress.org/support/plugin/cookillian" target="_blank">{{ __('Forum') }}</a> |
             <a href="http://pledgie.com/campaigns/16906" target="_blank">{{ __('Donate') }}</a>
         </span>
     </div>

@@ -6,18 +6,14 @@
 #}
 {% spaceless %}
 
-<div class="cookillian-alert">
-    <a class="close">×</a>
+<div class="cookillian-alert" style="display:none;">
+    <a class="close">&times;</a>
     <h3 class="alert-heading">{{ alert_heading }}</h3>
     {{ alert_content | raw }}
     <div class="buttons">
-        <a class="btn btn-ok" href="{{ response_ok }}"><i class=""></i>{{ alert_ok }}</a>&nbsp;
-        <a class="btn btn-no" href="{{ response_no }}"><i class=""></i>{{ alert_no }}</a>
+        <a class="btn btn-ok" href="{{ response_ok }}" rel="nofollow"><i class=""></i>{{ alert_ok }}</a>&nbsp;
+        <a class="btn btn-no" href="{{ response_no }}" rel="nofollow"><i class=""></i>{{ alert_no }}</a>
     </div>
 </div>
-
-{% if not manual %}
-<noscript><style type="text/css" media="screen">.cookillian-alert { position: absolute; left: 0; top: 0; } .cookillian-alert .close { display: none; }</style></noscript>
-{% endif %}
 
 {% endspaceless %}
