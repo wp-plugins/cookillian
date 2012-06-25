@@ -31,7 +31,8 @@
 
 .multi_checkbox .highlighted,
 .multi_checkbox li:hover {
-    background-color: highlight;
+    background-color: Highlight;
+    color: HighlightText;
 }
 
 
@@ -94,6 +95,10 @@
     margin: 20px 10px;
     border-radius: 3px;
     -webkit-border-radius: 3px;
+}
+
+#max_new_cookies {
+    width: 40px;
 }
 
 #maxmind_db,
