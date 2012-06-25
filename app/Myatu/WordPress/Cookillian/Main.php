@@ -32,7 +32,7 @@ class Main extends \Pf4wp\WordpressPlugin
         'B-l-i-t-z-B-O-T','Baiduspider','btbot','Charlotte','Exabot','FAST-WebCrawler','FurlBot',
         'FyberSpider','GalaxyBot','genieBot','GurujiBot','holmes','LapozzBot','LexxeBot','MojeekBot',
         'NetResearchServer','NG-Search','nuSearch','PostBot','Scrubby','Seekbot','ShopWiki',
-        'Speedy Spider','StackRambler','yacybot'
+        'Speedy Spider','StackRambler', 'Sogou', 'WocBot', 'yacybot'
     );
 
     // Country code -> Continent match up
@@ -359,11 +359,15 @@ class Main extends \Pf4wp\WordpressPlugin
     /**
      * Cookie handler
      *
-     * @param string $referer Referer of the current page (AJAX, @since 1.0.23)
+     * @param string $referrer Referrer of the current page (AJAX, @since 1.0.23)
      * @return bool Returns `true` if cookies are blocked
      */
-    public function handleCookies($referer = null)
+    public function handleCookies($referrer = null)
     {
+        // Don't do anything if it's a crawler - @since 1.1.14
+        if ($this->isCrawler())
+            return false;
+
         // We detect unknown cookies first
         $this->detectUnknownCookies();
 
@@ -378,7 +382,7 @@ class Main extends \Pf4wp\WordpressPlugin
         // If the user has not specifically opted out...
         if (!$this->optedOut()) {
             // Find out if the visitor has implied consent, and if so, add a statistic, set a cookie and return
-            if ($this->isImpliedConsent($referer)) {
+            if ($this->isImpliedConsent($referrer)) {
                 $this->addStat('optin');
 
                 $cookie_path = trailingslashit(parse_url(get_home_url(), PHP_URL_PATH));
@@ -414,7 +418,6 @@ class Main extends \Pf4wp\WordpressPlugin
             if (!$this->options->php_sessions_required && session_id()) {
                 // If sessions aren't required and there's one open, destroy it
                 $_SESSION = array();
-
                 $params = session_get_cookie_params();
                 setcookie(session_name(), '', time() - 3600,
                     $params["path"],   $params["domain"],
@@ -433,8 +436,10 @@ class Main extends \Pf4wp\WordpressPlugin
             // Sanitize the cookie name
             $cookie_name = $this->sanitizeCookieName($cookie_name);
 
-            // Skip the opt-out or session cookie
-            if ($cookie_name == $this->short_name . static::OPTOUT_ID || $cookie_name == $session_name)
+            // Skip our own or session cookies
+            if ($cookie_name == $this->short_name . static::OPTOUT_ID ||
+                $cookie_name == $this->short_name . static::OPTIN_ID  ||
+                $cookie_name == $session_name)
                 continue;
 
             // Set the $is_required
@@ -698,7 +703,7 @@ class Main extends \Pf4wp\WordpressPlugin
      * Checks if the visitor has seen the alert before, and implied consent
      *
      * @since 1.0.23
-     * @param string $referer Optional referer (AJAX)
+     * @param string $referrer Optional referrer (AJAX)
      * @return bool Returns true if the visitor implied consent
      */
     protected function isImpliedConsent($referrer = null)
@@ -713,7 +718,7 @@ class Main extends \Pf4wp\WordpressPlugin
         if (isset($_SERVER['HTTP_X_MOZ']) && $_SERVER['HTTP_X_MOZ'] == 'prefetch')
             return false;
 
-        // No referer provided, grab it
+        // No referrer provided, grab it
         if (is_null($referrer)) {
             if (isset($_SERVER['HTTP_REFERER']))
                 $referrer = $_SERVER['HTTP_REFERER'];
@@ -797,6 +802,17 @@ class Main extends \Pf4wp\WordpressPlugin
     }
 
     /**
+     * Returns whether the user agent is a known crawler
+     *
+     * @return bool
+     */
+    protected function isCrawler()
+    {
+        return (isset($_SERVER['HTTP_USER_AGENT']) && preg_match('#' . implode('|', $this->crawlers) . '#i', $_SERVER['HTTP_USER_AGENT']));
+    }
+
+
+    /**
      * Adds a statistic about the responses (or lack thereof)
      *
      * This saves the details in the 'stats' array, where the first key is the year,
@@ -808,11 +824,8 @@ class Main extends \Pf4wp\WordpressPlugin
      */
     protected function addStat($type)
     {
-        if ($this->options->debug_mode && is_user_logged_in())
-            return; // Don't track if in debug mode and user is logged in
-
-        // First figure out if we're dealing with a crawler/spider
-        if (isset($_SERVER['HTTP_USER_AGENT']) && preg_match('#' . implode('|', $this->crawlers) . '#i', $_SERVER['HTTP_USER_AGENT']))
+        // Don't track if in debug mode and user is logged in or it's a crawler
+        if (($this->options->debug_mode && is_user_logged_in()) || $this->isCrawler())
             return;
 
         $remote_country = $this->getCountryCode($this->getRemoteIP());
@@ -930,8 +943,8 @@ class Main extends \Pf4wp\WordpressPlugin
         switch ($answer) {
             case 2 :
                 // Reset/clear previous opt-in or out
-                setcookie($this->short_name . static::OPTIN_ID, '', time() - 3600, $cookie_path);
-                setcookie($this->short_name . static::OPTOUT_ID, '', time() - 3600, $cookie_path);
+                Cookies::delete($this->short_name . static::OPTIN_ID);
+                Cookies::delete($this->short_name . static::OPTOUT_ID);
                 break;
 
             case 1 :
@@ -955,7 +968,7 @@ class Main extends \Pf4wp\WordpressPlugin
 
         if (!empty($opt_in_or_out)) {
             // Set a cookie with the visitor's response
-            Cookies::set($opt_in_or_out, 1, strtotime(static::COOKIE_LIFE), true, false, $cookie_path);
+            Cookies::set($opt_in_or_out, 1, strtotime(static::COOKIE_LIFE), true);
         }
 
         if ($redirect) {
@@ -1205,8 +1218,10 @@ class Main extends \Pf4wp\WordpressPlugin
     public function onRegisterActions()
     {
         // Do not bother with this if we're processing an AJAX call
-        if (Helpers::doingAjax())
+        if (Helpers::doingAjax()) {
+            $this->handleCookies();
             return;
+        }
 
         // Was there a response to the cookie alert?
         if (isset($_REQUEST[$this->short_name . static::RESP_ID]))
@@ -1306,10 +1321,11 @@ class Main extends \Pf4wp\WordpressPlugin
 
                 // Performs handleCookies(), and returns JS data based on the result
                 $cookies_blocked = $this->handleCookies($data['true_referrer']);
+                $deleted_cookies = ($cookies_blocked && ($this->options->delete_cookies == 'before_optout' || $this->optedOut()) && !(is_user_logged_in() && $this->options->debug_mode));
 
                 $vars = array(
                     'blocked_cookies' => $cookies_blocked,
-                    'deleted_cookies' => ($cookies_blocked && ($this->options->delete_cookies == 'before_optout' || $this->optedOut()) && !(is_user_logged_in() && $this->options->debug_mode)),
+                    'deleted_cookies' => $deleted_cookies,
                     'implied_consent' => $this->hasImpliedConsent(),
                     'opted_out'       => $this->optedOut(),
                     'opted_in'        => $this->optedIn(),
@@ -1317,8 +1333,8 @@ class Main extends \Pf4wp\WordpressPlugin
                     'has_nst'         => ($this->options->noscript_tag && $cookies_blocked && !$this->optedOut() && !$this->hasActiveCachingPlugin()), // Used internally, check if "noscript" tag should be present
                 );
 
-                if (!$cookies_blocked) {
-                    // Cookies are not blocked, add some extra JS, if defined (save on extra AJAX calls)
+                if (!$deleted_cookies) {
+                    // Cookies are not deleted, add some extra JS, if defined (save on extra AJAX calls)
                     if ($this->options->script_header) {
                         // Add header scripts
                         $vars['header_script'] = $this->options->script_header;
@@ -1357,6 +1373,8 @@ class Main extends \Pf4wp\WordpressPlugin
                 break;
 
             case 'displayed' :
+                $this->handleCookies(false, false); // Ensure this call doesn't create cookies
+
                 // Lets the plugin know that an alert was displayed
                 $this->addStat('displayed');
 
@@ -1373,6 +1391,9 @@ class Main extends \Pf4wp\WordpressPlugin
             case 'opt_out' :
                 // Perform an opt out
                 $this->processResponse(0, false);
+
+                // Scrub cookies now
+                $this->handleCookies(false, false);
 
                 $this->ajaxResponse(true);
                 break;
@@ -1413,8 +1434,12 @@ class Main extends \Pf4wp\WordpressPlugin
         wp_enqueue_script($this->getName() . '-pub', $js_url . 'pub' . $debug . '.js', array('jquery'), $version);
 
         // Output JS variables that can remain static with caching
-        $extra_js_vars = sprintf('var cookillian = {"use_async_ajax":%s};', ($this->options->async_ajax) ? 'true' : 'false');
-        echo $this->jsBlock($extra_js_vars);
+        $extra_js_vars = array(
+            'use_async_ajax' => $this->options->async_ajax,
+            'scrub_cookies'  => $this->options->scrub_cookies,
+        );
+
+        echo $this->jsBlock(sprintf('var cookillian = %s;', json_encode((Object)$extra_js_vars)));
     }
 
     /**
@@ -1641,6 +1666,7 @@ class Main extends \Pf4wp\WordpressPlugin
                 'geo_backup_service'    => 'bool',
                 'async_ajax'            => 'bool',
                 'max_new_cookies'       => 'int',
+                'scrub_cookies'         => 'bool',
             ));
 
             // Extra sanity check for geo_cache_time, one minute is absolute minimum
@@ -1754,7 +1780,7 @@ class Main extends \Pf4wp\WordpressPlugin
             'alert_custom_content', 'required_text', 'script_header', 'script_footer', 'debug_mode',
             'js_wrap', 'show_on_unknown_location', 'maxmind_db', 'maxmind_db_v6', 'implied_consent',
             'noscript_tag', 'alert_style', 'alert_custom_style', 'delete_cookies', 'geo_cache_time',
-            'geo_backup_service', 'async_ajax', 'max_new_cookies',
+            'geo_backup_service', 'async_ajax', 'max_new_cookies', 'scrub_cookies'
         ));
 
         $vars = array_merge(array(
