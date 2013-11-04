@@ -32,7 +32,7 @@ class Main extends \Pf4wp\WordpressPlugin
         'B-l-i-t-z-B-O-T','Baiduspider','btbot','Charlotte','Exabot','FAST-WebCrawler','FurlBot',
         'FyberSpider','GalaxyBot','genieBot','GurujiBot','holmes','LapozzBot','LexxeBot','MojeekBot',
         'NetResearchServer','NG-Search','nuSearch','PostBot','Scrubby','Seekbot','ShopWiki',
-        'Speedy Spider','StackRambler', 'Sogou', 'WocBot', 'yacybot'
+        'Speedy Spider','StackRambler', 'Sogou', 'WocBot', 'yacybot', 'YodaoBot', 'PaperLiBot',
     );
 
     // Country code -> Continent match up
@@ -277,7 +277,8 @@ class Main extends \Pf4wp\WordpressPlugin
             return $country;
 
         // Nothing so far, looks like we'll have to get it from a local database ...
-        include_once $this->getPluginDir() . 'vendor/MaxMind/geoip.inc';
+        if (!function_exists('geoip_country_code_by_addr'))
+            include_once $this->getPluginDir() . 'vendor/MaxMind/geoip.inc';
 
         if (strpos($ip, ':') !== false) {
             // IPv6 lookup
@@ -632,6 +633,15 @@ class Main extends \Pf4wp\WordpressPlugin
 
         // Peform a simple check on stored known cookies first
         $known_cookies = $this->options->known_cookies;
+
+        // Force WordPress cookies, as this would otherwise cause a lock-out
+        if (!array_key_exists('wordpress_test_cookie', $known_cookies)) {
+            $known_cookies['wordpress_test_cookie'] = array('required' => true);
+        }
+
+        if (!array_key_exists('wordpress_*', $known_cookies)) {
+            $known_cookies['wordpress_*'] = array('required' => true);
+        }
 
         if (!array_key_exists($cookie_name, $known_cookies)) {
             // Simple check found nothing, see if we need to perform a heavier check using wildcards
@@ -1140,8 +1150,14 @@ class Main extends \Pf4wp\WordpressPlugin
         if (empty($known_cookies)) {
             $this->options->known_cookies = array(
                 'wordpress_*' => array(
-                    'desc'  => 'This cookie stores WordPress authentication details.',
-                    'group' => 'WordPress',
+                    'desc'     => 'This cookie stores WordPress authentication details.',
+                    'group'    => 'WordPress',
+                    'required' => true,
+                ),
+                'wordpress_test_cookie' => array(
+                    'desc'     => 'This cookie helps WordPress determine if it can store cookies',
+                    'group'    => 'WordPress',
+                    'required' => true,
                 ),
                 'wp-settings-*' => array(
                     'desc'  => 'This cookie helps remember your personal preferences within WordPress.',

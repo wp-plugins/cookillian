@@ -3,8 +3,8 @@ Contributors: Myatu
 Donate link: http://pledgie.com/campaigns/16906
 Tags: cookie, ec, europe, uk, cookie law, directive, eu cookie directive, filter, block,
 Requires at least: 3.3
-Tested up to: 3.4
-Stable tag: 1.1.18
+Tested up to: 3.7.1
+Stable tag: 1.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -69,6 +69,11 @@ with PHP versions older than 5.3.
 2. Statistics to track compliance impact
 
 == Changelog ==
+
+= 1.2 (November 4 2013) =
+* Fixed: WordPress 'wordpress_test_cookie' as well as 'wordpress_*' set to a required cookie in all circumstances, to avoid accidental lock-outs
+* Fixed: TLD not always correctly determined, causing a the cookie opt-in/out cookie not to be set
+* Changed: Removed AJAX NONCE check at the public side
 
 = 1.1.18 (June 25 2012) =
 * __Added:__ Option to periodically scrub cookies, to help capture JavaScript cookies
@@ -160,7 +165,7 @@ This depends. If you have your very own server, then this is Operating System sp
 
 If you are using a web hosting provider, then you need to contact the provider regarding this. Some can move your website to a different server with a newer version of PHP 5.3, while others make it as simple as adding/changing a line in the `.htaccess` file or a setting in the control panel. For example:
 
-* 1&1 Webhosting: Add `AddType x-mapp-php6 .php` to the `.htaccess` file
+* 1&1 Webhosting: Add `AddHandler x-mapp-php6 .php` to the `.htaccess` file
 * OVH: Add `SetEnv PHP_VER 5_3` or `SetEnv PHP_VER 5_TEST` to the `.htaccess` file
 * GoDaddy Linux Shared Hosting: Add `AddHandler x-httpd-php5-3 .php` to the `.htaccess` file
 * GoDaddy 4GH Hosting: Visit GoDaddy's __Hosting Control Center__ -> __Content__ -> __Programming Languages__
